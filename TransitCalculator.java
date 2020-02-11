@@ -1,25 +1,25 @@
-import java.util.Arrays;
-import java.util.ArrayList;
+/* @author Daniel Xiang
+ * @version 1.1
+ * @since 2020-02-11
+ */
+
+import java.util.*;
 
 public class TransitCalculator {
   
 	/* Number of days a person will be 
-	* using the transit system (up to 30 days)
-	*/
-	public int numDays;
+	 * using the transit system (up to 30 days)
+	 */
+	private int numDays;
 	
 	/* Number of individual rides the person
-	* expects to take in that time.
-	*/
-	public int numRides;
+	 * expects to take in that time.
+	 */
+	private int numRides;
 	
-	// Arrays to keep track of fare options
-	public static ArrayList<Double> fares = new ArrayList<>(
-		Arrays.asList(2.75, 33.00, 127.00)
-	);
-	public static ArrayList<String> options = new ArrayList<>(
-		Arrays.asList("Pay-per-ride", "7-day Unlimited Rides", "30-day Unlimited Rides")
-	);
+	// Hashmap to keep track of fare options
+	private static HashMap<String, Double> fares = new HashMap<>();
+	
 	
 	// Constructor
 	public TransitCalculator(int rides, int days) 
@@ -29,42 +29,65 @@ public class TransitCalculator {
 	public double unlimited7Price() {
 		int numPasses = 0;
 		if (numDays % 7 > 0)
-		numPasses = numDays / 7 + 1;
+			numPasses = numDays / 7 + 1;
 		else
-		numPasses = numDays / 7;
+			numPasses = numDays / 7;
 		
-		double totalFare = numPasses * fares.get(1);
+		double totalFare = numPasses * fares.get("7-day Unlimited Rides");
 		return totalFare / numRides;
 	}
   
-	public ArrayList<Double> getRidePrices() {
-		double payPerRide = fares.get(0);
+	public HashMap<String, Double> getRidePrices() {
+		double payPerRide = fares.get("Pay-per-ride");
 		double unlimited7 = unlimited7Price();
-		double monthly = fares.get(2) / numRides;
-		return new ArrayList<Double>(
-			Arrays.asList(payPerRide, unlimited7, monthly)
-		);
+		double monthly = fares.get("30-day Unlimited Rides") / numRides;
+		
+		HashMap<String, Double> faresPerRide = new HashMap<>();
+		faresPerRide.put("Pay-per-ride", payPerRide);
+		faresPerRide.put("7-day Unlimited Rides", unlimited7);
+		faresPerRide.put("30-day Unlimited Rides", monthly);
+		
+		return faresPerRide;
 	}
 	
 	public String getBestFare() {
-		ArrayList<Double> prices = getRidePrices();
-		double bestFare = Double.POSITIVE_INFINITY;
-		for (double p : prices) 
-			if (p < bestFare) bestFare = p;
+		HashMap<String, Double> prices = getRidePrices();
+		double bestFare = Collections.min(prices.values()); 
+		String bestOption = "";
 		
-		int bestIndex = prices.indexOf(bestFare);
-		return options.get(bestIndex);
+		for (Map.Entry<String, Double> entry : prices.entrySet()) 
+			if (Objects.equals(bestFare, entry.getValue()))
+				bestOption = entry.getKey();
+		return bestOption;
 	}
+	
+	public static void prt(String str, boolean newline) {
+		if (newline)
+			System.out.println(str);
+		else
+			System.out.print(str);
+	}
+	
 	
 	// Main
 	public static void main(String[] args) {
-		TransitCalculator test = new TransitCalculator(12, 5);
-		ArrayList<Double> rates = test.getRidePrices();
-		String result = test.getBestFare();
-		int index = options.indexOf(result);
-		System.out.println("You should get the " + result +
-				" option at $" + rates.get(index) +
-				" per ride.");
+		// Create hashmap to store fare options
+		fares.put("Pay-per-ride", 2.75);
+		fares.put("7-day Unlimited Rides", 33.00);
+		fares.put("30-day Unlimited Rides", 127.00);
+		
+		// Read user input
+		Scanner sc = new Scanner(System.in);
+		prt("How many days will you be using the transit system? ", false);
+		int days = sc.nextInt();
+		prt("The number of individual rides you expect to take during this period of time: ", false);
+		int rides = sc.nextInt();
+		
+		TransitCalculator tc = new TransitCalculator(rides, days);
+		HashMap<String, Double> prices = tc.getRidePrices();
+		String result = tc.getBestFare();
+		prt("You should get the " + result + " at $", false);
+		System.out.printf("%.2f per ride.", prices.get(result));
 	}
   
 }
